@@ -14,8 +14,9 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
+import datetime
 import os
+import os.path
 import re
 import sys
 import math
@@ -33,6 +34,11 @@ shutdown_event = None
 
 # Used for bound_interface
 socket_socket = socket.socket
+
+if os.path.isfile('log.csv') == 0:
+    f = open('log.csv', 'a')
+    f.write('Date,Download,Upload,Latency\n')
+    f.close()
 
 try:
     import xml.etree.cElementTree as ET
@@ -161,6 +167,7 @@ def distance(origin, destination):
     lat1, lon1 = origin
     lat2, lon2 = destination
     radius = 6371  # km
+
 
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
@@ -344,6 +351,9 @@ def getConfig():
     uh = catch_request(request)
     if uh is False:
         print_('Could not retrieve speedtest.net configuration')
+        f = open('log.csv','a')
+        f.write('no internet connection on %s \n' % datetime.datetime.now())
+        f.close()
         sys.exit(1)
     configxml = []
     while 1:
@@ -702,7 +712,11 @@ def speedtest():
         print_()
     print_('Upload: %0.2f M%s/s' %
            ((ulspeed / 1000 / 1000) * args.units[1], args.units[0]))
-
+		   
+    f = open('log.csv','a')
+    f.write('%s,' % datetime.datetime.now() + '%0.2f,' % ((dlspeed / 1000 / 1000) * args.units[1]) + '%0.2f,' % ((ulspeed / 1000 / 1000) * args.units[1]) + '%(latency)s ms' % best + '\n')
+    f.close()
+	
     if args.share and args.mini:
         print_('Cannot generate a speedtest.net share results image while '
                'testing against a Speedtest Mini server')
